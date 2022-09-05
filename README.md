@@ -48,6 +48,54 @@ npm run dev
 
 - 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 
+다음처럼 쿼리를 짜 보았습니다.
+제 로컬 환경에서 작동시켰을 때 쿼리 시간은 0.16758204입니다.
+쿼리 요구사항을 제대로 이해했는지 피드백 부탁드립니다.
+특히 지역별로 언제 퇴실했는지 부분이 정확히 어떤 의미인지 모르겠어서
+일단 강의노트에 있는 결과에 가능한 비슷한 결과가 나오도록 쿼리 작성했습니다.
+지역별로 언제 퇴실했는지라는 말이 혹시 지역별로 grouping하라는 말일까요?
+감사합니다!!
+
+```text
+SELECT 
+		 FIRST_QUERY.employee_id AS 사원번호
+    ,FIRST_QUERY.employee_name AS 이름
+    ,FIRST_QUERY.employee_income AS 연봉 
+    ,FIRST_QUERY.employee_position AS 직급명
+    ,SECOND_QUERY.time AS 입출입시간
+    ,SECOND_QUERY.region AS 지역
+    ,SECOND_QUERY.record_symbol AS 입출입구분
+FROM 
+(
+SELECT 
+	mng.employee_id
+	,(SELECT LAST_NAME FROM employee WHERE id = mng.employee_id) AS employee_name
+    ,sal.annual_income AS employee_income
+    ,(SELECT POSITION_NAME FROM position WHERE id = mng.employee_id AND SUBSTR(end_date, 1,4) = '9999') AS employee_position
+FROM 
+(
+ SELECT * FROM department WHERE UPPER(note) = 'ACTIVE'
+) AS dpt INNER JOIN 
+(
+ SELECT * FROM manager WHERE SUBSTR(end_date, 1,4) = '9999'
+) AS mng on dpt.id = mng.department_id 
+  INNER JOIN
+(
+ SELECT * FROM salary
+) AS sal on mng.employee_id = sal.id
+		 AND SUBSTR(sal.end_date, 1,4) = '9999'
+ORDER BY annual_income desc limit 5
+) FIRST_QUERY INNER JOIN 
+(
+  SELECT * FROM record WHERE record_symbol = 'O' ORDER BY region
+) AS SECOND_QUERY ON FIRST_QUERY.employee_id = SECOND_QUERY.employee_id
+
+;
+
+
+```
+
+
 ---
 
 ### 2단계 - 인덱스 설계
