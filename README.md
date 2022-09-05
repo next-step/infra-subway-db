@@ -46,8 +46,52 @@ npm run dev
 
 1. 인덱스 설정을 추가하지 않고 아래 요구사항에 대해 1s 이하(M1의 경우 2s)로 반환하도록 쿼리를 작성하세요.
 
-- 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
+- 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요.    
+  (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
+    ```sql
+    SELECT X.사원번호
+         , X.이름
+         , X.연봉
+         , X.직급명
+         , R.time          입출입시간
+         , R.region        지역
+         , R.record_symbol 입출입구분
+    FROM (
+             SELECT D.id            부서ID
+                  , M.employee_id   사원번호
+                  , E.last_name     이름
+                  , P.position_name 직급명
+                  , S.annual_income 연봉
+             FROM tuning.department D
+                      JOIN tuning.manager M ON D.id = M.department_id
+                      JOIN tuning.employee E ON M.employee_id = E.id
+                      JOIN tuning.position P ON E.id = P.id
+                      JOIN tuning.salary S ON S.id = M.employee_id
+                 AND D.note = 'active' /* Active(active) 상태인 부서 */
+                 AND NOW() BETWEEN M.start_date AND M.end_date /* 현재매니저 */
+                 AND NOW() BETWEEN P.start_date AND P.end_date /* 현재매니저 */
+                 AND NOW() BETWEEN S.start_date AND S.end_date   
+             ORDER BY S.annual_income desc
+                 LIMIT 0,5
+         ) X
+             JOIN
+         (
+             SELECT employee_id, time, region, record_symbol
+             FROM tuning.record
+             WHERE record_symbol = 'O' /* 퇴실(O) */
+         ) R
+         ON R.employee_id = X.사원번호
+    ```
 
+- 실행계획 
+![img.png](img.png)
+
+
+- 실행시간 : 0.182sec
+![img_1.png](img_1.png)
+    - mysql에서 문자열 대소문자 상관없이 검색된다고 해서 그냥 'active'로만 비교함.   
+      Active 상태인 부서를 조히할 때 `AND D.note = 'active' OR 'Active'`로 조회해보니       
+      0.182sec -> 0.170sec로 소폭 줄어들었으나 큰 차이 없는 것 같음
 ---
 
 ### 2단계 - 인덱스 설계
