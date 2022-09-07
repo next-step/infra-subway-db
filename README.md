@@ -48,6 +48,44 @@ npm run dev
 
 - 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 
+```sql
+-- 활동중인(Active) 부서의 현재 부서관리자(manager) 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실(O)했는지 조회해보세요.
+-- (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
+SELECT manager_info.사원번호,
+       manager_info.이름,
+       manager_info.연봉,
+       manager_info.직급명,
+       r.time AS 입출입시간,
+       r.region AS 지역,
+       r.record_symbol AS 입출입구분
+  FROM (
+        SELECT e.id AS 사원번호, e.last_name AS 이름, s.annual_income AS 연봉, p.position_name AS 직급명
+          FROM department d
+         INNER JOIN manager m
+            ON d.id = m.department_id
+         INNER JOIN employee e
+            ON m.employee_id = e.id
+         INNER JOIN position p
+            ON e.id = p.id
+         INNER JOIN salary s
+            ON e.id = s.id
+         WHERE d.note = 'Active'
+           AND m.end_date = '9999-01-01'
+           AND s.end_date = '9999-01-01'
+           AND p.end_date = '9999-01-01'
+         ORDER BY s.annual_income DESC
+         LIMIT 5
+    ) AS manager_info
+ INNER JOIN record r
+    ON manager_info.사원번호 = r.employee_id
+   AND r.record_symbol = 'O'
+```
+
+![쿼리결과](step1-쿼리결과.png)
+![실행계획](step1-실행계획(Visual).png)
+![실행계획](실행계획.png)
+소요시간: 0.163s
+
 ---
 
 ### 2단계 - 인덱스 설계
