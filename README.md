@@ -48,6 +48,12 @@ npm run dev
 
 - 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 
+[쿼리](/sql/top_manager_comeby_by_region.sql)  
+[쿼리 결과 csv](/sql/result.csv)  
+<img alt="실행계획" src="/sql/explain.png" width="200px"/>  
+[쿼리 2s 반환 (M1 pro): 1.731sec](/sql/duration.png) 
+
+
 ---
 
 ### 2단계 - 인덱스 설계
