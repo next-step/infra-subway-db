@@ -92,6 +92,34 @@ SELECT manager_info.사원번호,
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
 
+- Coding as a Hobby
+  - 작성한 쿼리
+    - ```mysql
+      -- Coding as a Hobby
+      -- e.g.) Yes 80.8%, No 19.2%
+      SELECT hobby,
+             CONCAT(ROUND(COUNT(*) / (SELECT COUNT(*) FROM programmer) * 100, 1), '%') as 'percentage'
+        FROM programmer
+       GROUP BY hobby
+       ORDER BY hobby DESC;
+      ```
+    - Visual 실행계획
+      - ![img.png](step2-mission1-실행계획(Visual).png)
+    - ![실행 결과](step2-mission1-실행결과.png)
+      - 0.420s 소요
+    - 인덱스 추가
+      - ```sql
+        CREATE INDEX `idx_programmer_hobby` ON `subway`.`programmer` (hobby) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT
+        ``` 
+      - 실행계획
+        - ![img.png](step2-mission1-튜닝후-실행계획(Visual).png)
+        - ![img.png](step2-mission1-튜닝후-실행계획.png)
+      - 0.074s 소요
+- 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
+- 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
+- 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
+- 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
+
 ---
 
 ### 추가 미션
