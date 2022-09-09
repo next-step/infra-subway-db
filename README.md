@@ -190,7 +190,25 @@ SELECT manager_info.사원번호,
       - ![img.png](step2-mission4-튜닝후-실행계획.png)
     - 0.0041s 소요
 - 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
-
+  - 작성한 쿼리
+    - ```mysql
+      -- 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요.
+      SELECT p.exercise as '운동 유형',
+             COUNT(p.exercise) as '해당하는 환자의 수'
+        FROM covid c
+       INNER JOIN hospital h ON c.hospital_id = h.id
+       INNER JOIN member m ON c.member_id = m.id
+       INNER JOIN programmer p ON c.programmer_id = p.id
+       WHERE h.name = '서울대병원'
+         AND m.age BETWEEN 30 AND 39
+       GROUP BY p.exercise;
+      ```
+    - 실행계획
+      - ![img.png](step2-mission5-실행계획(Visual).png)
+      - ![img.png](step2-mission5-실행계획.png)
+    - ![img.png](step2-mission5-실행결과.png)
+    - 0.0046s 소요
+  - 인덱스 추가 없이 기존 추가된 index 사용
 ---
 
 ### 추가 미션
