@@ -162,6 +162,33 @@ SELECT manager_info.사원번호,
     - 0.023s 소요
     - 인덱스 추가 없이 기존 추가된 index 사용
 - 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
+  - 작성한 쿼리
+    - ```mysql
+      -- 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요.
+      SELECT c.stay as '머문 기간',
+             COUNT(c.stay) as '머문 사람 수'
+        FROM covid c
+       INNER JOIN hospital h ON c.hospital_id = h.id
+       INNER JOIN programmer p ON c.programmer_id = p.id
+       INNER JOIN member m ON c.member_id = m.id
+       WHERE h.name = '서울대병원'
+         AND p.country = 'India'
+         AND m.age BETWEEN 20 AND 29
+       GROUP BY c.stay;
+      ```
+    - ![img.png](step2-mission4-실행계획(Visual).png)
+    - ![img.png](step2-mission4-실행결과.png)
+    - 1.356s 소요
+  - 인덱스 추가
+    - ```sql
+      ALTER TABLE member ADD PRIMARY KEY(id);
+      CREATE UNIQUE INDEX idx_hospital_name ON hospital (name);
+      CREATE INDEX idx_covid_hospital_id ON covid (hospital_id);
+      ```
+    - 실행 계획
+      - ![img.png](step2-mission4-튜닝후-실행계획(Visual).png)
+      - ![img.png](step2-mission4-튜닝후-실행계획.png)
+    - 0.0041s 소요
 - 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
 
 ---
