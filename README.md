@@ -107,14 +107,14 @@ SELECT manager_info.사원번호,
       - ![img.png](step2-mission1-실행계획(Visual).png)
     - ![실행 결과](step2-mission1-실행결과.png)
       - 0.420s 소요
-    - 인덱스 추가
-      - ```sql
-        CREATE INDEX `idx_programmer_hobby` ON `subway`.`programmer` (hobby) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT
-        ``` 
-      - 실행계획
-        - ![img.png](step2-mission1-튜닝후-실행계획(Visual).png)
-        - ![img.png](step2-mission1-튜닝후-실행계획.png)
-      - 0.074s 소요
+  - 인덱스 추가
+    - ```sql
+      CREATE INDEX `idx_programmer_hobby` ON `subway`.`programmer` (hobby) COMMENT '' ALGORITHM DEFAULT LOCK DEFAULT
+      ``` 
+    - 실행계획
+      - ![img.png](step2-mission1-튜닝후-실행계획(Visual).png)
+      - ![img.png](step2-mission1-튜닝후-실행계획.png)
+    - 0.074s 소요
 - 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
   - 작성한 쿼리
     - ```mysql
@@ -129,18 +129,18 @@ SELECT manager_info.사원번호,
       - ![img.png](step2-mission2-실행계획(Visual).png)
     - ![img.png](step2-mission2-실행결과.png)
     - 0.375s 소요
-    - 인덱스 추가
-      - ```sql
-        ALTER TABLE covid ADD PRIMARY KEY(id);
-        ALTER TABLE programmer ADD PRIMARY KEY(id);
-        ALTER TABLE hospital ADD PRIMARY KEY(id);
-        
-        CREATE INDEX idx_covid_programmer_id ON covid (programmer_id);
-        ```
-      - 실행 계획
-        - ![img.png](step2-mission2-튜닝후-실행계획(Visual).png)
-        - ![img.png](step2-mission2-튜닝후-실행계획.png)
-      - 0.0040s 소요
+  - 인덱스 추가
+    - ```sql
+      ALTER TABLE covid ADD PRIMARY KEY(id);
+      ALTER TABLE programmer ADD PRIMARY KEY(id);
+      ALTER TABLE hospital ADD PRIMARY KEY(id);
+      
+      CREATE INDEX idx_covid_programmer_id ON covid (programmer_id);
+      ```
+    - 실행 계획
+      - ![img.png](step2-mission2-튜닝후-실행계획(Visual).png)
+      - ![img.png](step2-mission2-튜닝후-실행계획.png)
+    - 0.0040s 소요
 - 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
   - 작성한 쿼리
     - ```mysql
