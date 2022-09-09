@@ -140,8 +140,27 @@ SELECT manager_info.사원번호,
       - 실행 계획
         - ![img.png](step2-mission2-튜닝후-실행계획(Visual).png)
         - ![img.png](step2-mission2-튜닝후-실행계획.png)
-      - 0.038s 소요
+      - 0.0040s 소요
 - 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
+  - 작성한 쿼리
+    - ```mysql
+      -- 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요.
+      SELECT j.id as programmer_id,
+             h.name as hospital_name
+        FROM (
+              SELECT p.id
+                FROM programmer p
+               WHERE p.hobby = 'Yes'
+                 AND (p.dev_type = 'Student' OR p.years_coding = '0-2 years')
+             ) as j
+       INNER JOIN covid c ON c.programmer_id = j.id
+       INNER JOIN hospital h ON c.hospital_id = h.id
+       ORDER BY j.id;
+      ```
+    - ![img.png](step2-mission3-실행계획(Visual).png)
+    - ![img.png](step2-mission3-실행결과.png)
+    - 0.023s 소요
+    - 인덱스 추가 없이 기존 추가된 index 사용
 - 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
 - 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
 
