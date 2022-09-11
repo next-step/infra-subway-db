@@ -48,6 +48,70 @@ npm run dev
 
 - 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 
+    ```mysql
+    select
+        top5.employee_id as `사원번호`,
+        e.last_name as `이름`,
+        top5.annual_income as `연봉`,
+        cp.position_name as `직급명`,
+        ro.time as `입출입시간`,
+        ro.region as `지역`,
+        ro.record_symbol as `입출입구분`
+    from (
+        select
+            cm.employee_id,
+            cs.annual_income
+        from department as d
+        inner join (
+            select
+                m.employee_id,
+                m.department_id
+            from manager as m
+            where now() between m.start_date and m.end_date
+        ) as cm  # current manager
+            on d.id = cm.department_id
+        inner join (
+            select
+                s.id,
+                s.annual_income
+            from salary as s
+            where now() between s.start_date and s.end_date
+        ) as cs # current salary
+            on cm.employee_id = cs.id
+        where d.note = 'active'
+        order by cs.annual_income desc
+        limit 5
+    ) as top5
+    inner join employee as e
+        on top5.employee_id = e.id
+    inner join (
+        select
+            p.id,
+            p.position_name
+        from position as p
+        where now() between p.start_date and p.end_date
+    ) as cp # current position
+        on top5.employee_id = cp.id
+    inner join (
+        select
+            r.employee_id,
+            r.time,
+            r.record_symbol,
+            r.region
+        from record as r
+        where r.record_symbol = 'O'
+    ) as ro # record out
+        on top5.employee_id = ro.employee_id;
+    ```
+
+    ![](images/result.png)
+
+    ```
+   [2022-09-11 02:42:51] 14 rows retrieved starting from 1 in 1 s 671 ms (execution: 1 s 653 ms, fetching: 18 ms)
+   ```
+
+    ![](images/explain.png)
+
 ---
 
 ### 2단계 - 인덱스 설계
