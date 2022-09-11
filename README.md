@@ -90,6 +90,194 @@ from (select m.employee_id, e.first_name, e.last_name, s.annual_income
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
 
+> M1 기준
+
+#### Coding as a Hobby 와 같은 결과를 반환하세요.
+
+```sql
+select hobby, round(count(1) / (SELECT COUNT(1) FROM programmer) * 100, 1)
+from programmer
+group by hobby;
+```
+
+![img.png](images/01_before_hobby_index.png)
+
+- 인덱스 추가 전
+    - 4.3s
+
+![img_1.png](images/01_after_hobby_index.png)
+
+- hobby 인덱스 추가 후
+    - 0.4s
+    - 더 빠른 방법이 있을까요?
+
+#### 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
+
+```sql
+select p.id as 'programmer id', c.id as 'covid id', h.name as 'hospital name', p.hobby as 'hobby', p.dev_type as 'dev type', p.years_coding as 'years coding'
+from programmer p
+         left outer join covid c on c.programmer_id = p.id
+         inner join hospital h on h.id = c.hospital_id
+where p.hobby = 'Yes'
+  and (p.dev_type = 'Student' or p.years_coding = '0-2 years');
+```
+
+![img.png](images/02_before_index.png)
+
+- 인덱스 추가 전
+    - 5.0s
+
+![img_1.png](images/02_after_covid_programmer_id_index.png)
+
+- covid.programmer_id 인덱스 추가 후
+
+![img_2.png](images/02_after_programmer_id_pk.png)
+
+- programmer.id PK 설정 후
+
+![img_3.png](images/02_after_covid_hospital_id_index.png)
+
+- covid.hospital_id 인덱스 추가 후
+    - 0.183s
+
+![img_4.png](images/02_after_hospital_id_pk.png)
+
+- hospital.id PK 설정 후
+    - 0.034s
+
+#### 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
+
+```sql
+select p.id as 'programmer id', c.id as 'covid id', h.name as 'hospital name', p.hobby as 'hobby', p.dev_type as 'dev type', p.years_coding as 'years coding'
+from programmer p
+         left outer join covid c on c.programmer_id = p.id
+         inner join hospital h on h.id = c.hospital_id
+where p.hobby = 'Yes'
+  and (p.dev_type = 'Student' or p.years_coding = '0-2 years');
+```
+
+![img_5.png](images/03_before_index.png)
+
+- 인덱스 추가 전
+    - 0.054s
+
+#### 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
+
+```sql
+select c.stay, count(1) as 'count'
+from programmer p
+         left outer join covid c on c.programmer_id = p.id
+         left outer join member m on m.id = c.member_id
+         inner join hospital h on h.id = c.hospital_id
+where p.country = 'India'
+  and h.name = '서울대병원'
+  and m.age between 20 and 29
+group by c.stay;
+```
+
+![img.png](images/04_before_index.png)
+
+- 인덱스 추가 전
+    - 12.146s
+
+![img.png](images/04_after_member_id_pk.png)
+
+- member id PK 설정 후
+    - 1.132s
+
+```sql
+select c.stay, count(1) as 'count'
+from programmer p
+         left outer join covid c
+                         on c.programmer_id = p.id
+         left outer join (select *
+                          from member
+                          where age between 20 and 29) m
+                         on m.id = c.member_id
+         inner join (select *
+                     from hospital
+                     where name = '서울대병원') h
+                    on h.id = c.hospital_id
+where p.country = 'India'
+group by c.stay
+;
+```
+
+- query join table 필터 조건으로 변경 후
+    - 0.986s
+
+```sql
+select c.stay, count(1) as 'count'
+from programmer p
+         left outer join covid c
+                         on c.programmer_id = p.id
+         left outer join (select *
+                          from member
+                          where age between 20 and 29) m
+                         on m.id = c.member_id
+         inner join (select *
+                     from hospital
+                     where name = '서울대병원') h
+                    on h.id = c.hospital_id
+where p.country = 'India'
+group by c.stay
+;
+```
+
+![img_3.png](images/04_after_age_index.png)
+
+- inner join으로 변경, age 인덱스 추가 후
+    - 0.820s
+
+```sql
+select c.stay, count(1) as 'count'
+from (select *
+      from programmer
+      where country = 'India') p
+         inner join covid c on c.programmer_id = p.id
+         inner join (select id
+                     from member
+                     where age between 20 and 29) m on m.id = c.member_id
+         inner join (select id
+                     from hospital
+                     where name = '서울대병원') h on h.id = c.hospital_id
+group by c.stay
+;
+```
+
+![img_3.png](images/04_after_country_index.png)
+
+- programmer 모수 줄이기, country 인덱스 추가 후
+    - 0.181s
+
+#### 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
+
+```sql
+select p.exercise, count(1) as 'count'
+from (select id, exercise
+      from programmer) p
+         inner join (select programmer_id, member_id, hospital_id
+                     from covid) c on c.programmer_id = p.id
+         inner join (select id
+                     from member
+                     where age between 30 and 39) m on m.id = c.member_id
+         inner join (select id
+                     from hospital
+                     where name = '서울대병원') h on h.id = c.hospital_id
+group by p.exercise
+order by null;
+```
+
+![img.png](images/05_before_index.png)
+
+- 인덱스 추가 전
+  - 0.242s
+
+![img_1.png](images/05_after_hospital_name_index.png)
+
+- hospital name 인덱스 추가 후
+  - 0.185s
+
 ---
 
 ### 추가 미션
