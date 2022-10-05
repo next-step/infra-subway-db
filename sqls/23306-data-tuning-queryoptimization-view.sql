@@ -8,6 +8,45 @@
 -- employee_id, first_name, annual_income, position_name, region, record_symbol, time
 -- department, employee, salary, position, record
 
+
+
+## 연봉 상위 5위 피드백 (2022.10.06)
+-- 이 구간이 너무 느린데요.
+-- position 테이블을 조인하는 것보다 manager 테이블을 조인하는 것은 어떨까요?
+SELECT id, annual_income 
+FROM (
+	SELECT employee_id, end_date FROM manager WHERE end_date >= current_date()
+    ) AS m 
+INNER JOIN (
+	SELECT id, annual_income, end_date FROM salary
+) AS s on m.employee_id = s.id AND s.end_date >= current_date()
+ORDER BY annual_income desc 
+limit 5;
+
+## 피드백 결과로 재구성 (2022.10.06) / 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들
+SELECT id, annual_income 
+FROM (
+	SELECT employee_id, 
+		FROM manager m
+		LEFT JOIN department d on d.id = m.department_id
+		WHERE end_date >= current_date()
+		and lower(d.note) = 'active'
+    ) AS am 
+INNER JOIN (
+	SELECT id, annual_income, end_date FROM salary
+) AS s on am.employee_id = s.id AND s.end_date >= current_date()
+ORDER BY annual_income desc 
+limit 5;
+
+SELECT employee_id, end_date 
+	FROM manager m
+    LEFT JOIN department d on d.id = m.department_id
+    WHERE end_date >= current_date()
+    and lower(d.note) = 'active';
+SELECT employee_id FROM manager WHERE end_date >= current_date();
+select * from manager where employee_id = '111534';
+
+
 -- 활동중인 부서
 select * from department where lower(note) = 'active';
 -- 현재 근무중인 부서 관리자
@@ -30,6 +69,7 @@ select * from salary;
 select * from position;
 select * from employee;
 select * from employee_department;
+select * from manager;
 
 
 
@@ -45,6 +85,8 @@ select m.employee_id, e.last_name, p.position_name
     and ep.end_date >= current_date()
     and lower(d.note) = 'active'
     and p.end_date >= current_date();
+
+
 
 
 -- 연봉 상위 5위

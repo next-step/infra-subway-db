@@ -3,6 +3,44 @@
 -- M1의 경우엔 시간 제약사항을 달성하기 어렵습니다. 2s를 기준으로 해보시고 어렵다면, 일단 리뷰요청 부탁드려요
 -- 급여 테이블의 사용여부 필드는 사용하지 않습니다. 현재 근무중인지 여부는 종료일자 필드로 판단해주세요.
 
+
+# v4 (2022.10.06)
+SELECT 
+	top_m.id as '사원번호',
+    e.last_name as '이름',
+    top_m.annual_income as '연봉',
+    p.position_name as '직급명', 
+    recent_record.region as '지역', 
+    recent_record.record_symbol as '입출입구분', 
+    recent_record.time as '입출입시간'
+FROM (
+	SELECT id, annual_income 
+	FROM (
+		SELECT employee_id
+			FROM manager m
+			LEFT JOIN department d on d.id = m.department_id
+			WHERE end_date >= current_date()
+			and lower(d.note) = 'active'
+		) AS am 
+	INNER JOIN (
+		SELECT id, annual_income, end_date 
+        FROM salary
+	) AS s on am.employee_id = s.id AND s.end_date >= current_date()
+	ORDER BY annual_income desc 
+	limit 5
+) AS top_m
+LEFT JOIN position p on p.id = top_m.id AND p.end_date >= current_date()
+LEFT JOIN employee e on e.id = top_m.id
+LEFT JOIN (
+	SELECT employee_id, region, record_symbol, max(time) as time
+		from record 
+		where record_symbol = 'O'
+		group by employee_id, region
+) AS recent_record on top_m.id = recent_record.employee_id;
+
+
+
+
 # v3
 select 
 	top_salary_managers.id, 

@@ -49,44 +49,38 @@ npm run dev
 - 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 
 ```sql
-select
-    top_salary_managers.id,
-    top_salary_managers.last_name,
-    top_salary_managers.annual_income,
-    top_salary_managers.position_name,
-    recent_record.region,
-    recent_record.record_symbol,
-    recent_record.time
-from (
-         select *
-         from salary s
-                  left join (
-             select id as sal_sub_id, max(start_date) as recent_date
-             from salary
-             group by id
-         ) as sal_sub on sal_sub.sal_sub_id = s.id and sal_sub.recent_date = s.start_date
-                  right join (
-             select m.employee_id, e.last_name, p.position_name
-             from manager m
-                      left join employee_department ep on ep.employee_id = m.employee_id
-                      left join department d on d.id = m.department_id
-                      left join position p on p.id = m.employee_id
-                      left join employee e on e.id = m.employee_id
-             where m.end_date >= current_date()
-               and ep.end_date >= current_date()
-               and lower(d.note) = 'active'
-               and p.end_date >= current_date()
-         ) as active_managers on active_managers.employee_id = s.id
-         where sal_sub.sal_sub_id = s.id and sal_sub.recent_date = s.start_date
-         order by s.annual_income desc
-         limit 5
-     ) as top_salary_managers
-         left join (
-    select employee_id, region, record_symbol, max(time) as time
+SELECT
+    top_m.id as '사원번호',
+    e.last_name as '이름',
+    top_m.annual_income as '연봉',
+    p.position_name as '직급명',
+    recent_record.region as '지역',
+    recent_record.record_symbol as '입출입구분',
+    recent_record.time as '입출입시간'
+FROM (
+     SELECT id, annual_income
+     FROM (
+              SELECT employee_id
+              FROM manager m
+                       LEFT JOIN department d on d.id = m.department_id
+              WHERE end_date >= current_date()
+                and lower(d.note) = 'active'
+          ) AS am
+              INNER JOIN (
+         SELECT id, annual_income, end_date
+         FROM salary
+     ) AS s on am.employee_id = s.id AND s.end_date >= current_date()
+     ORDER BY annual_income desc
+     limit 5
+ ) AS top_m
+ LEFT JOIN position p on p.id = top_m.id AND p.end_date >= current_date()
+ LEFT JOIN employee e on e.id = top_m.id
+ LEFT JOIN (
+    SELECT employee_id, region, record_symbol, max(time) as time
     from record
     where record_symbol = 'O'
     group by employee_id, region
-) as recent_record on top_salary_managers.id = recent_record.employee_id;
+) AS recent_record on top_m.id = recent_record.employee_id;
 
 ```
 
