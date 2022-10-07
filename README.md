@@ -64,10 +64,11 @@ inner join (
 			on e.id = s.id
 		inner join position p 
 			on e.id = p.id
-		where d.note='Active' and p.position_name='Manager'
+		where p.end_date >= current_timestamp 
+			and ed.end_date >= current_timestamp
 			and m.end_date >= current_timestamp
-            and ed.end_date >= current_timestamp
-            and p.end_date >= current_timestamp
+            and d.note='Active' 
+            and p.position_name='Manager'
         group by e.id
         order by annual_income desc
 		limit 5
