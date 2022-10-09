@@ -1,12 +1,30 @@
-## 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
--- 인덱스 설정을 추가하지 않고 200ms (0.2sec) 이하로 반환합니다.
--- M1의 경우엔 시간 제약사항을 달성하기 어렵습니다. 2s를 기준으로 해보시고 어렵다면, 일단 리뷰요청 부탁드려요
--- 급여 테이블의 사용여부 필드는 사용하지 않습니다. 현재 근무중인지 여부는 종료일자 필드로 판단해주세요.
+## 피드백 적용 (2022.10.09)
+-- 크게 두 덩어리로 나누어서 볼 것 : 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들 + 최근에 각 지역별로 언제 퇴실
 
-# 필요한 정보
--- 사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간
--- employee_id, first_name, annual_income, position_name, region, record_symbol, time
--- department, employee, salary, position, record
+# 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들
+SELECT am.employee_id, s.annual_income 
+FROM (
+	SELECT employee_id
+		FROM manager m
+		LEFT JOIN department d on d.id = m.department_id
+		WHERE end_date >= current_date()
+		and lower(d.note) = 'active'
+	) AS am 
+INNER JOIN (
+	SELECT id, annual_income, end_date 
+	FROM salary
+) AS s on am.employee_id = s.id AND s.end_date >= current_date()
+INNER JOIN position p on p.id = am.employee_id AND p.end_date >= current_date()
+INNER JOIN employee e on e.id = am.employee_id
+ORDER BY annual_income desc 
+limit 5;
+
+# 최근에 각 지역별로 언제 퇴실했는지
+-- region 테이블 : 한 지역에 반복적으로 갔던 케이스가 없다. 집계함수 필요 없음
+select * from record;
+
+
+
 
 
 
@@ -26,7 +44,7 @@ limit 5;
 ## 피드백 결과로 재구성 (2022.10.06) / 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들
 SELECT id, annual_income 
 FROM (
-	SELECT employee_id, 
+	SELECT employee_id
 		FROM manager m
 		LEFT JOIN department d on d.id = m.department_id
 		WHERE end_date >= current_date()
@@ -47,9 +65,20 @@ SELECT employee_id FROM manager WHERE end_date >= current_date();
 select * from manager where employee_id = '111534';
 
 
--- 활동중인 부서
+## 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
+-- 인덱스 설정을 추가하지 않고 200ms (0.2sec) 이하로 반환합니다.
+-- M1의 경우엔 시간 제약사항을 달성하기 어렵습니다. 2s를 기준으로 해보시고 어렵다면, 일단 리뷰요청 부탁드려요
+-- 급여 테이블의 사용여부 필드는 사용하지 않습니다. 현재 근무중인지 여부는 종료일자 필드로 판단해주세요.
+
+# 필요한 정보
+-- 사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간
+-- employee_id, first_name, annual_income, position_name, region, record_symbol, time
+-- department, employee, salary, position, record
+
+# 활동중인 부서
 select * from department where lower(note) = 'active';
--- 현재 근무중인 부서 관리자
+
+# 현재 근무중인 부서 관리자
 select * from manager where end_date >= current_date();
 select * from employee_department where end_date >= current_date();
 select * 
@@ -57,24 +86,16 @@ select *
 	left join employee_department ep on ep.employee_id = m.employee_id
     where m.end_date >= current_date()
     and ep.end_date >= current_date();
--- 직원들이 각 지역별 언제 퇴실(O)
+
+# 직원들이 각 지역별 언제 퇴실(O)
 select * from record;
-select employee_id, region, record_symbol, max(time) as time
+select employee_id, record_symbol, max(time) as time
 	from record 
     where record_symbol = 'O'
-    group by employee_id, region;
+    group by employee_id;
 
 
-select * from salary;
-select * from position;
-select * from employee;
-select * from employee_department;
-select * from manager;
-
-
-
--- (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
-select * from manager m;
+# (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 select m.employee_id, e.last_name, p.position_name
 	from manager m
 	left join employee_department ep on ep.employee_id = m.employee_id
@@ -89,7 +110,7 @@ select m.employee_id, e.last_name, p.position_name
 
 
 
--- 연봉 상위 5위
+# 연봉 상위 5위
 select * from salary where id = '110228';
 select id, max(start_date)
 	from salary
