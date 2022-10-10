@@ -82,10 +82,154 @@ FROM (
 ```
 
 ---
-
 ### 2단계 - 인덱스 설계
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
+
+<br>
+
+#### 요구조건 
+- 주어진 데이터셋을 활용하여 아래 조회 결과를 100ms 이하로 반환
+  - M1의 경우엔 시간 제약사항을 달성하기 어렵습니다. 200ms를 기준으로 해보시고 어렵다면, 일단 리뷰요청 부탁드려요
+
+<br>
+
+#### 1) Coding as a Hobby 와 같은 결과를 반환하세요. 
+
+- before : 0.211sec
+  - ![img.png](img.png)
+  - ![img_1.png](img_1.png)
+- after : 0.035sec
+  - programmer > hobby 에 index 추가 
+  - ![img_2.png](img_2.png)
+  - ![img_3.png](img_3.png)
+
+```sql
+EXPLAIN
+SELECT 
+	hobby,
+	TRUNCATE(count(1) / (SELECT count(1) FROM programmer) * 100, 1)
+FROM programmer
+GROUP BY hobby;
+
+```
+
+<br>
+
+#### 2) 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
+
+- before : 0.0040sec
+  - ![img_4.png](img_4.png)
+  - ![img_5.png](img_5.png)
+- after : 0.0015sec
+  - hospital > id에 pk, nn, uq 적용
+  - covid > id에 pk, nn, uq 적용
+  - covid > id + hospital_id index 적용
+  - ![img_6.png](img_6.png)
+  - ![img_7.png](img_7.png)
+
+```sql
+EXPLAIN;
+SELECT 
+	c.id,
+    h.name
+FROM hospital h
+INNER JOIN covid c ON c.hospital_id = h.id;
+
+```
+
+<br>
+
+
+#### 3) 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
+
+- before : 0.616sec
+  - ![img_8.png](img_8.png)
+  - ![img_9.png](img_9.png)
+- after : 0.117sec
+  - programmer > id 에 pk, nn, uq 추가 
+  - hospital > id 에 pk, nn, uq 추가
+  - covid > id 에 pk, nn, uq 추가
+  - ![img_10.png](img_10.png)
+  - ![img_11.png](img_11.png)
+
+```sql
+EXPLAIN;
+SELECT 
+	c.programmer_id,
+	h.name
+FROM hospital h
+INNER JOIN covid c ON c.hospital_id = h.id
+INNER JOIN (SELECT id FROM programmer WHERE hobby = 'Yes' AND (dev_type LIKE 'Student%' OR years_coding_prof = '0-2 years')) AS p ON p.id = c.programmer_id
+ORDER BY c.programmer_id;
+
+```
+
+<br>
+
+#### 4) 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
+
+- before : 0.147sec
+  - ![img_12.png](img_12.png)
+  - ![img_13.png](img_13.png)
+- after : 0.024sec
+  - hospital > id에 pk, nn, uq 속성 추가
+  - hospital > name unique 속성 추가
+  - hospital > id + name index 추가
+  - covid > id에 pk, nn, uq 속성 추가
+  - covid > id + member_id + hospital_id + programmer_id + stay index 추가
+  - programmer : id 에 pk, nn, uq 추가
+  - member: id 에 pk, nn, uq 추가
+  - ![img_14.png](img_14.png)
+  - ![img_15.png](img_15.png)
+
+```sql
+EXPLAIN;
+SELECT
+	stay,
+	count(1) as cnt
+FROM (SELECT id FROM hospital WHERE name = '서울대병원') AS h
+INNER JOIN (SELECT hospital_id, member_id, programmer_id, stay FROM covid) as c ON c.hospital_id = h.id
+INNER JOIN (SELECT id FROM member WHERE age between 20 and 29) AS m ON c.member_id = m.id
+INNER JOIN (SELECT id FROM programmer WHERE country = 'India') AS p ON c.programmer_id = p.id
+GROUP BY stay;
+
+```
+
+<br>
+
+#### 5) 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
+
+- before 
+  - ![img_16.png](img_16.png)
+  - ![img_17.png](img_17.png)
+- after : 
+  - hospital > id에 pk, nn, uq 적용
+  - hospital > name 속성에 uq 적용
+  - covid > id에 pk, nn, uq 적용
+  - covid > id + hospital_id 를 index로 잡아줌
+  - member > id에 pk, nn, uq 적용
+  - member > id + age index 적용
+  - programmer > id에 pk, nn, uq 적용
+  - ![img_18.png](img_18.png)
+  - ![img_19.png](img_19.png)
+
+
+```sql
+EXPLAIN;
+SELECT 
+	exercise,
+    count(A.id)
+FROM (SELECT id FROM hospital where name = '서울대병원') AS B
+INNER JOIN (SELECT id, hospital_id FROM covid) AS C ON C.hospital_id = B.id 
+INNER JOIN (SELECT id FROM member where age between 30 and 39) AS M ON M.id = C.id 
+INNER JOIN (SELECT id, exercise FROM programmer) AS A ON A.id = C.id 
+GROUP BY exercise
+ORDER BY null;
+
+```
+
+
 
 ---
 
