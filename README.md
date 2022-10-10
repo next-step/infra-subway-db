@@ -48,7 +48,44 @@ npm run dev
 
 - 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 
----
+<img width="1492" alt="스크린샷 2022-10-10 오후 8 05 55" src="https://user-images.githubusercontent.com/29122916/194852995-1aadee65-2900-45ce-8e4e-9f035a6d0c46.png">
+<img width="1348" alt="스크린샷 2022-10-10 오후 8 07 23" src="https://user-images.githubusercontent.com/29122916/194853083-10cc13b9-32b2-42d1-9e03-dac788948130.png">
+
+SELECT 	total.employee_id as "사원번호"
+        , total.last_name as "이름"
+        , total.position_name as "직급명"
+        , total.annual_income as "연봉"
+        , r.time as "입출입시간"
+        , r.region as "지역"
+        , r.record_symbol as "입출입시간"
+FROM (
+        SELECT m.employee_id
+        , e.last_name
+        , p.position_name
+        , s.annual_income
+        FROM tuning.department d
+        INNER JOIN tuning.manager m
+        ON d.id = m.department_id
+        INNER JOIN tuning.employee e
+        ON m.employee_id = e.id
+        INNER JOIN tuning.employee_department de
+        ON e.id = de.employee_id
+        INNER JOIN tuning.position p
+        ON de.employee_id = p.id
+        INNER JOIN tuning.salary s
+        ON p.id = s.id
+        WHERE d.note = "Active"
+        AND m.end_date >= curdate()
+        AND de.end_date >= curdate()
+        AND p.position_name = "manager"
+        AND p.end_date >= curdate()
+        AND s.end_date >= curdate()
+        ORDER BY s.annual_income DESC
+        LIMIT 5
+) AS total
+INNER JOIN record r
+ON total.employee_id = r.employee_id
+AND r.record_symbol = 'O';
 
 ### 2단계 - 인덱스 설계
 
