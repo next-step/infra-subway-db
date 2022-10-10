@@ -1,3 +1,9 @@
+## 피드백 적용 (2022.10.10)
+explain select * from department where note = 'active';
+explain select * from department where lower(note) = 'active';
+
+
+
 ## 피드백 적용 (2022.10.09)
 -- 크게 두 덩어리로 나누어서 볼 것 : 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들 + 최근에 각 지역별로 언제 퇴실
 

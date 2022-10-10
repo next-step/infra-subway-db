@@ -49,33 +49,35 @@ npm run dev
 - 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 
 ```sql
-SELECT 
-	top_m.employee_id as '사원번호',
+## v6. (2022.10.10) 0.191sec
+EXPLAIN;
+SELECT
+    top_m.employee_id as '사원번호',
     top_m.last_name as '이름',
     top_m.annual_income as '연봉',
-    top_m.position_name as '직급명', 
-    r.region as '지역', 
-    r.record_symbol as '입출입구분', 
+    top_m.position_name as '직급명',
+    r.region as '지역',
+    r.record_symbol as '입출입구분',
     r.time as '입출입시간'
 FROM (
-	SELECT am.employee_id, e.last_name, s.annual_income, p.position_name
-	FROM (
-		SELECT employee_id
-			FROM manager m
-			LEFT JOIN department d on d.id = m.department_id
-			WHERE end_date >= current_date()
-			and lower(d.note) = 'active'
-	) AS am 
-	INNER JOIN (
-		SELECT id, annual_income, end_date
-		FROM salary
-	) AS s on am.employee_id = s.id AND s.end_date >= current_date()
-	INNER JOIN position p on p.id = am.employee_id AND p.end_date >= current_date()
-	INNER JOIN employee e on e.id = am.employee_id
-	ORDER BY annual_income desc 
-	limit 5
-) AS top_m
-LEFT JOIN record r on r.employee_id = top_m.employee_id AND r.record_symbol = 'O';
+         SELECT am.employee_id, e.last_name, s.annual_income, p.position_name
+         FROM (
+                  SELECT employee_id
+                  FROM manager m
+                           LEFT JOIN department d on d.id = m.department_id
+                  WHERE end_date >= current_date()
+                    and d.note = 'active'
+              ) AS am
+                  INNER JOIN (
+             SELECT id, annual_income, end_date
+             FROM salary
+         ) AS s on am.employee_id = s.id AND s.end_date >= current_date()
+                  INNER JOIN position p on p.id = am.employee_id AND p.end_date >= current_date()
+                  INNER JOIN employee e on e.id = am.employee_id
+         ORDER BY annual_income desc
+         limit 5
+     ) AS top_m
+         INNER JOIN record r ON r.employee_id = top_m.employee_id AND r.record_symbol = 'O';
 
 ```
 
