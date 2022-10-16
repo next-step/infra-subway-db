@@ -190,3 +190,4 @@ AND r.record_symbol = 'O';
 ### 추가 미션
 
 1. 페이징 쿼리를 적용한 API endpoint를 알려주세요
+   GET /stations
