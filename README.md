@@ -90,7 +90,101 @@ AND r.record_symbol = 'O';
 ### 2단계 - 인덱스 설계
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
-
+#### Coding as a Hobby 와 같은 결과를 반환하세요.
+  - 인덱스 적용 (2.305 sec / 0.000040 sec) -> (0.045 sec / 0.0000081 sec)
+    - programmer 테이블 hobby 인덱스 추가;
+    - SELECT ROUND(COUNT(*) / (select COUNT(*) from programmer) * 100, 1) AS hobby_rate FROM programmer
+  GROUP BY hobby;
+<img width="1347" alt="스크린샷 2022-10-15 오후 8 35 12" src="https://user-images.githubusercontent.com/29122916/195984389-b6446480-f433-4ca6-897e-849afe2b18b2.png">
+<img width="168" alt="스크린샷 2022-10-15 오후 8 35 23" src="https://user-images.githubusercontent.com/29122916/195984421-d99a748f-4c85-49a9-85d6-7f2fd885c811.png">
+---
+#### 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
+  - SELECT c.id, h.name
+    FROM hospital h
+    INNER JOIN covid c
+    ON h.id = c.hospital_id
+    INNER JOIN programmer p
+    ON c.programmer_id = p.id;
+  - covid, hospital, programmer primary key(pk nn uq) 추가
+  - hospital 테이블 name 인덱스 추가
+  - covid 테이블 hospital_id + programmer_id + id 인덱스 추가
+<img width="1539" alt="스크린샷 2022-10-15 오후 11 30 17" src="https://user-images.githubusercontent.com/29122916/195991913-ae3dbba5-0e20-44b7-b944-4a09d1acaf33.png">
+<img width="540" alt="스크린샷 2022-10-15 오후 11 30 09" src="https://user-images.githubusercontent.com/29122916/195991939-286c2b0b-2879-4df2-8a0e-7097b87ebfd1.png">
+  - 결과 0.0072 sec / 0.0017 sec
+---
+#### 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
+- SELECT
+  p.id
+  , h.name
+  FROM (  SELECT p.id
+  FROM programmer p
+  WHERE p.hobby = 'Yes'
+  AND (p.student LIKE 'Yes%' OR p.years_coding = '0-2 years')
+  ORDER BY p.id
+  ) as p
+  INNER JOIN covid c
+  ON p.id = c.programmer_id
+  INNER JOIN hospital h
+  ON c.hospital_id = h.id;
+- covid 테이블 programmer_id 인덱스 추가
+<img width="1547" alt="스크린샷 2022-10-16 오전 12 41 09" src="https://user-images.githubusercontent.com/29122916/195995296-1cace8b0-207a-4e2c-a01a-6ea70207d9fc.png">
+<img width="584" alt="스크린샷 2022-10-16 오전 12 43 04" src="https://user-images.githubusercontent.com/29122916/195995368-51b3f6c1-9e35-439a-8add-52412a7727bb.png">
+- 결과 2.469 sec / 0.00019 sec -> 0.012 sec / 0.0055 sec
+---
+#### 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
+- SELECT
+  hc.stay,
+  COUNT(1) as cnt
+  FROM (
+  SELECT c.hospital_id, c.programmer_id, c.member_id, c.stay
+  FROM hospital h
+  INNER JOIN covid as c
+  ON h.id = c.hospital_id
+  WHERE name = "서울대병원"
+  ) AS hc
+  INNER JOIN (
+  SELECT p.id
+  FROM programmer p
+  WHERE p.country = 'India'
+  ) as p
+  ON hc.programmer_id = p.id
+  INNER JOIN (
+  SELECT m.id
+  FROM member AS m
+  WHERE m.age between 20 and 29
+  ) as m
+  ON hc.member_id = m.id
+  GROUP BY hc.stay;
+- covid 테이블 hospital_id + programmer_id + member_id + stay 인덱스 추가
+- programmer 테이블 country + id 인덱스 추가
+- member 테이블 추가 age 인덱스 추가
+<img width="1694" alt="스크린샷 2022-10-16 오전 2 29 30" src="https://user-images.githubusercontent.com/29122916/196000002-9c8997ce-80f1-44d4-84b3-ef79a0bdd382.png">
+<img width="758" alt="스크린샷 2022-10-16 오전 2 30 04" src="https://user-images.githubusercontent.com/29122916/196000019-f1d5c6cb-c35d-462d-bfe4-e71c09428ca8.png">
+- 결과 0.074 sec / 0.000014 sec
+---
+#### 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
+- SELECT
+  p.exercise,
+  COUNT(p.id)
+  FROM (
+  SELECT c.programmer_id, c.member_id
+  FROM hospital h
+  INNER JOIN covid c
+  ON h.id = c.hospital_id
+  WHERE h.name = '서울대병원'
+  ) as hc
+  INNER JOIN programmer p
+  ON hc.programmer_id = p.id
+  INNER JOIN (
+  SELECT m.id
+  FROM member m
+  WHERE m.age BETWEEN 30 AND 39
+  ) as m
+  ON hc.member_id = m.id
+  GROUP BY p.exercise;
+<img width="1696" alt="스크린샷 2022-10-16 오전 2 40 27" src="https://user-images.githubusercontent.com/29122916/196000464-865c8d96-bf01-4526-b761-5d1f2b3a5a9e.png">
+<img width="761" alt="스크린샷 2022-10-16 오전 2 40 19" src="https://user-images.githubusercontent.com/29122916/196000473-c66a07e9-11a8-4339-81c7-83eea4d09d96.png">
+- 측정 결과 0.020 sec / 0.000011 sec
 ---
 
 ### 추가 미션
