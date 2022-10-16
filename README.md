@@ -88,7 +88,76 @@ ORDER BY sub.annual_income DESC
 
 ### 2단계 - 인덱스 설계
 
-1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
+#### Coding as a Hobby 와 같은 결과를 반환하세요.
+
+![img1.png](images/img1.png)
+
+```sql
+USE subway;
+
+SELECT 
+	hobby, 
+	COUNT(hobby) AS `count`,
+	COUNT(hobby) / (SELECT COUNT(hobby) FROM programmer) * 100 as `percent`
+FROM programmer 
+GROUP BY hobby
+ORDER BY NULL;
+```
+
+#### 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
+
+![img2.png](images/img2.png)
+
+```sql
+USE subway;
+
+SELECT c.programmer_id, h.name
+FROM covid AS c
+INNER JOIN hospital AS h 
+	ON c.hospital_id = h.id
+WHERE c.programmer_id IS NOT NULL
+GROUP BY c.programmer_id, h.name
+ORDER BY NULL;
+```
+
+#### 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
+
+![img3.png](images/img3.png)
+
+```sql
+USE subway;
+
+SELECT c.id, p.id, h.name, p.hobby, p.dev_type, p.years_coding
+FROM programmer AS p
+INNER JOIN covid AS c
+	ON c.programmer_id = p.id
+INNER JOIN hospital AS h
+	ON h.id = c.hospital_id
+WHERE p.hobby = 'Yes' 
+	AND (dev_type LIKE 'Student%' OR years_coding_prof = '0-2 years')
+ORDER BY p.id;
+```
+
+#### 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
+
+![img4.png](images/img4.png)
+
+```sql
+USE subway;
+
+SELECT c.stay, COUNT(m.id)
+FROM covid AS c
+INNER JOIN hospital AS h 
+	ON h.id = c.hospital_id AND h.name = '서울대병원'
+INNER JOIN member AS m 
+	ON m.id = c.member_id AND m.age BETWEEN '20' AND '29'
+INNER JOIN programmer AS p 
+	ON p.id = c.programmer_id AND p.country = 'India'
+WHERE c.member_id IS NOT NULL 
+	AND c.programmer_id IS NOT NULL
+GROUP BY c.stay
+ORDER BY NULL;
+```
 
 ---
 
