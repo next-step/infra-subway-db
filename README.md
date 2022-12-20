@@ -72,10 +72,10 @@ from (
 order by t1.id;
 ```
 
-![sql_explain](/images/sql_explain)
+![sql_explain](/images/sql_explain.png)
 
 
-![sql_visual_explain](/images/sql_visual_explain)
+![sql_visual_explain](/images/sql_visual_explain.png)
 
 
 ---
