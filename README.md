@@ -74,7 +74,8 @@ left join employee tt3
 on tt3.id = tt1.employee_id
 left join position tt4
 on tt4.id = tt1.employee_id
-group by tt1.employee_id, tt2.region;
+group by tt1.employee_id, tt2.region
+order by null
 
 
 
