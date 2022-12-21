@@ -72,7 +72,7 @@ inner join (select * from record where record_symbol = 'O') tt2
 on tt2.employee_id = tt1.employee_id
 left join employee tt3
 on tt3.id = tt1.employee_id
-left join position tt4
+left join (select * from position where position_name = 'manager') tt4
 on tt4.id = tt1.employee_id
 order by null
 
