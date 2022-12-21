@@ -50,10 +50,10 @@ npm run dev
 
 select
     tt1.employee_id AS 사원번호,
-    ANY_VALUE(tt3.last_name) AS 이름,
-    ANY_VALUE(tt1.annual_income) AS 연봉,
-    ANY_VALUE(tt4.position_name) AS 직급명,
-    max(tt2.time) AS 입출입시간,
+    tt3.last_name AS 이름,
+    tt1.annual_income AS 연봉,
+    tt4.position_name AS 직급명,
+    tt2.time AS 입출입시간,
     tt2.region AS 지역,
     tt2.record_symbol AS 입출입구분
 from (
@@ -74,7 +74,6 @@ left join employee tt3
 on tt3.id = tt1.employee_id
 left join position tt4
 on tt4.id = tt1.employee_id
-group by tt1.employee_id, tt2.region
 order by null
 
 
