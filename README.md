@@ -57,15 +57,16 @@ select
     tt2.region AS 지역,
     tt2.record_symbol AS 입출입구분
 from (
-    select 
-        t1.employee_id, 
-        t3.annual_income 
+    select
+        t1.employee_id,
+        max(annual_income) as annual_income
     from (select * from manager where end_date = '9999-01-01') t1
     inner join (select * from department where note = 'active')t2
     on t2.id = t1.department_id
-    inner join (select * from salary where end_date = '9999-01-01') t3
+    left join (select * from salary) t3
     on t3.id = t1.employee_id
-    order by t3.annual_income desc
+    group by t1.employee_id
+    order by annual_income desc
     limit 5
 ) tt1
 inner join (select * from record where record_symbol = 'O') tt2
