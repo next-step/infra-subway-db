@@ -48,6 +48,36 @@ npm run dev
 
 - 활동중인(Active) 부서의 현재 부서관리자 중 연봉 상위 5위안에 드는 사람들이 최근에 각 지역별로 언제 퇴실했는지 조회해보세요. (사원번호, 이름, 연봉, 직급명, 지역, 입출입구분, 입출입시간)
 
+
+```sql
+select 
+	t1.id as 사원번호, 
+	t1.last_name as 이름, 
+	t1.annual_income as 연봉, 
+	t1.position_name as 직급명, 
+	r.time as 입출입시간, 
+	r.region as 지역, 
+	r.record_symbol as 입출입구분
+from (
+	select e.id, e.last_name, p.position_name, s.annual_income
+	from tuning.department d 
+		inner join tuning.manager m on m.department_id = d.id and m.end_date = '9999-01-01'
+		inner join tuning.employee e on e.id = m.employee_id
+		inner join tuning.position p on p.id = e.id and p.position_name = 'manager' and p.end_date = '9999-01-01'
+		inner join tuning.salary s on s.id = e.id and s.end_date = '9999-01-01'
+	where d.note = 'active'
+	order by s.annual_income desc
+	limit 5
+) t1 inner join tuning.record r on r.employee_id = t1.id and r.record_symbol = 'O'
+order by t1.id;
+```
+
+![sql_explain](/images/sql_explain.png)
+
+
+![sql_visual_explain](/images/sql_visual_explain.png)
+
+
 ---
 
 ### 2단계 - 인덱스 설계
