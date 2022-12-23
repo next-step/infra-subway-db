@@ -85,6 +85,66 @@ order by null
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
 
+- 1.1) Coding as a Hobby 와 같은 결과를 반환하세요.
+    ALTER TABLE programmer ADD INDEX hobby_index (hobby);
+    
+    select hobby, round((t1.total / t2.cnt), 2) as percentage
+    from (
+        select hobby, count(*) as total
+        from programmer
+        group by hobby
+    ) AS t1, (select count(*) as cnt from programmer) as t2
+    order by hobby desc;
+
+- 1.2) 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
+    ALTER TABLE programmer ADD INDEX programmer_pk_index (id);
+    ALTER TABLE covid ADD INDEX covid_fk_index1 (programmer_id);
+    ALTER TABLE hospital ADD INDEX hospital_pk_index (id);
+
+    select t1.id, t3.name
+    from programmer t1
+    left join covid t2
+    on t2.programmer_id = t1.id
+    left join hospital t3
+    on t3.id = t2.hospital_id;
+
+- 1.3) 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
+    select t1.id, t3.name
+    from ( select id from programmer where hobby = 'yes' or years_coding = '0-2 yeares') t1
+    left join covid t2
+    on t2.programmer_id = t1.id
+    left join hospital t3
+    on t3.id = t2.hospital_id
+    order by t1.id
+
+- 1.4) 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
+    ALTER TABLE covid ADD INDEX covid_fk_index1 (programmer_id);
+    ALTER TABLE programmer ADD INDEX programmer_country_index (country);
+    ALTER TABLE member ADD INDEX member_pk_index (id);
+    ALTER TABLE member ADD INDEX member_age_index (age);
+    ALTER TABLE covid drop INDEX stay_index;
+    
+    select stay, count(stay) from (select stay, programmer_id from covid where (select id from hospital where name = '서울대병원') = hospital_id) t1
+    inner join (select id from programmer where country = 'india') t2
+    on t2.id = t1.programmer_id
+    inner join (select id from member where age between 20 and 29) t3
+    on t3.id = t1.programmer_id
+    group by t1.stay;
+
+- 1.5) 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
+    ALTER TABLE member ADD INDEX member_pk_index (id);
+    ALTER TABLE member ADD INDEX member_age_index (age);
+    ALTER TABLE covid ADD INDEX covid_fk_index1 (programmer_id);
+    ALTER TABLE covid ADD INDEX covid_hospital_index (hospital_id);
+    ALTER TABLE programmer ADD INDEX programmer_pk_index (id);
+    
+    select t3.exercise, count(t3.exercise)
+    from (select programmer_id from covid where (select id from hospital where name = '서울대병원') = hospital_id) t1
+    inner join (select id from member where age between 30 and 39) t2
+    on t2.id = t1.programmer_id
+    inner join programmer t3
+    on t3.id = t1.programmer_id
+    group by t3.exercise;
 ---
 
 ### 추가 미션
