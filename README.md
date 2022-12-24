@@ -50,7 +50,7 @@ npm run dev
 
 ```sql
 select
-	eid,
+    eid,
     name,
     income,
     position_name,
@@ -58,25 +58,24 @@ select
     r.region as region,
     r.record_symbol as symbol
 from
-	(
-		select 
-			e.id as eid,
-			e.last_name as name,
-			'Manager' as position_name,
-			s.annual_income as income
-		from employee e
-		inner join manager m on e.id = m.employee_id
-        inner join department d on d.id = m.department_id
-		inner join salary s on s.id = e.id
-        where 
-			m.end_date = '9999-01-01' and
-			s.end_date = '9999-01-01' and
-            d.note like binary 'Active'
-            -- d.note = 'Active' 
-        order by income desc
-        limit 5
-	) t
-inner join record r on r.employee_id = t.eid
+    (
+    select
+        e.id as eid,
+        e.last_name as name,
+        'Manager' as position_name,
+        s.annual_income as income
+    from employee e
+    inner join manager m on e.id = m.employee_id
+    inner join department d on d.id = m.department_id
+    inner join salary s on s.id = e.id
+    where
+        m.end_date = '9999-01-01' and
+        s.end_date = '9999-01-01' and
+        d.note = 'active'
+    order by income desc
+    limit 5
+    ) t
+    inner join record r on r.employee_id = t.eid
 where r.record_symbol = 'O'
 order by income desc;
 ```
