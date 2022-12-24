@@ -84,6 +84,67 @@ order by t1.id;
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
 
+#### Coding as a Hobby 와 같은 결과를 반환하세요.(Yes: 80.8%, No: 19.2%)
+```sql
+select
+round(count(case hobby when 'YES' then 1 end) / count(*) * 100, 1) as YES_PERSENT
+, round(count(case hobby when 'NO' then 1 end) / count(*) * 100, 1) as NO_PERSENT
+from subway.programmer;
+```
+* programmer.hobby 인덱스 추가
+
+#### 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
+```sql
+-- 
+select c.id, h.name
+from subway.programmer p 
+	inner join subway.covid c on c.programmer_id = p.id
+    inner join subway.hospital h on h.id = c.hospital_id
+;
+```
+
+#### 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
+```sql
+select c.id, h.name, t1.hobby, t1.dev_type, t1.years_coding
+from (
+	select id, hobby, dev_type, years_coding from subway.programmer where hobby = 'YES' and (student like 'YES%' or years_coding = '0-2 years')
+) t1 inner join subway.covid c on c.programmer_id = t1.id
+	inner join subway.hospital h on h.id = c.hospital_id
+;
+```
+* student 인덱스 설정
+* years_coding 인덱스 설정
+* covid.id, peogrammer.id pk 설정
+* covid.programmer_id, covid.hospital_id, programmer.id, hospital.id 인덱스 설정
+
+
+#### 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
+```sql
+select c.stay, count(*) as count
+from (select id from subway.member where age between 20 and 29) t1
+	inner join subway.covid c on c.member_id = t1.id 
+	inner join subway.hospital h on h.id = c.hospital_id and h.name = '서울대병원'
+group by stay
+;
+```
+* member.age 인덱스 설정
+* member.id pk 설정
+* covid.member_id 인덱스 설정
+* covid.stay 인덱스 설정
+* hospital.name 인덱스 설정
+
+
+#### 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
+```sql
+select p.exercise, count(*) as count
+from (select id from subway.member where age between 30 and 39) t1
+	inner join subway.covid c on c.member_id = t1.id 
+	inner join subway.programmer p on p.id = c.programmer_id
+	inner join subway.hospital h on h.id = c.hospital_id and h.name = '서울대병원'
+group by p.exercise
+;
+```
+
 ---
 
 ### 추가 미션
