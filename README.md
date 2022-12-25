@@ -88,13 +88,18 @@ order by null
 - 1.1) Coding as a Hobby 와 같은 결과를 반환하세요.
   ALTER TABLE programmer ADD INDEX hobby_index (hobby);
 
-  select hobby, round((t1.total / t2.cnt), 2) as percentage
-  from (
-    select hobby, count(*) as total
-    from programmer
-    group by hobby
-  ) AS t1, (select count(*) as cnt from programmer) as t2
-  order by hobby desc;
+    select hobby, round((t1.total / t2.cnt), 2) as percentage
+    from (
+        select hobby, count(*) as total
+        from programmer
+        group by hobby
+    ) AS t1, (select count(*) as cnt from programmer) as t2
+    order by hobby desc;
+
+    select
+        round(count(case hobby when 'YES' then 1 end) / count(*) * 100, 1) as YES_PERSENT
+        , round(count(case hobby when 'NO' then 1 end) / count(*) * 100, 1) as NO_PERSENT
+    from subway.programmer;
 
 - 1.2) 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
   ALTER TABLE programmer ADD INDEX programmer_pk_index (id);
