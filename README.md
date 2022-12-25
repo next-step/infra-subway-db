@@ -132,23 +132,23 @@ ALTER TABLE programmer ADD PRIMARY KEY (id);
     on t3.id = t2.hospital_id
 
 - 1.4) 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
-  ALTER TABLE covid ADD INDEX covid_fk_index1 (programmer_id);
-  ALTER TABLE programmer ADD INDEX programmer_country_index (country);
-  ALTER TABLE member ADD INDEX member_pk_index (id);
-  ALTER TABLE member ADD INDEX member_age_index (age);
-  ALTER TABLE covid drop INDEX stay_index;
+    ALTER TABLE covid ADD INDEX covid_programmer_id_index (programmer_id);
+    ALTER TABLE covid ADD INDEX covid_hospital_id_index (hospital_id);
+    ALTER TABLE covid ADD INDEX covid_stay_index (stay);
+    ALTER TABLE programmer ADD INDEX programmer_country_index (country);
+    ALTER TABLE member ADD INDEX member_age_index (age);
+    ALTER TABLE hospital ADD INDEX hospital_name_index (name);
 
-  select stay, count(stay) 
-  from (
-    select stay, programmer_id 
-    from covid 
-    where (select id from hospital where name = '서울대병원') = hospital_id
-  ) t1
-  inner join (select id from programmer where country = 'india') t2
-  on t2.id = t1.programmer_id
-  inner join (select id from member where age between 20 and 29) t3
-  on t3.id = t1.programmer_id
-  group by t1.stay;
+    select 
+        stay, count(stay)
+    from covid t1
+    inner join (select * from hospital where name = '서울대병원') t2
+    on t2.id = t1.hospital_id
+    inner join (select id from programmer where country = 'india') t3
+    on t3.id = t1.programmer_id
+    inner join (select id from member where age between 20 and 29) t4
+    on t4.id = t1.programmer_id
+    group by t1.stay;
 
 - 1.5) 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계하세요. (user.Exercise)
   ALTER TABLE member ADD INDEX member_pk_index (id);
