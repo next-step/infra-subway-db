@@ -108,10 +108,7 @@ ALTER TABLE programmer ADD PRIMARY KEY (id);
     from subway.programmer;
 
 - 1.2) 프로그래머별로 해당하는 병원 이름을 반환하세요. (covid.id, hospital.name)
-  ALTER TABLE programmer ADD INDEX programmer_pk_index (id);
   ALTER TABLE covid ADD INDEX covid_fk_index1 (programmer_id);
-  ALTER TABLE covid ADD INDEX covid_pk_index1 (id);
-  ALTER TABLE hospital ADD INDEX hospital_pk_index (id);
 
   select t2.id, t3.name
   from programmer t1
@@ -121,17 +118,18 @@ ALTER TABLE programmer ADD PRIMARY KEY (id);
   on t3.id = t2.hospital_id;
 
 - 1.3) 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고 user.id 기준으로 정렬하세요. (covid.id, hospital.name, user.Hobby, user.DevType, user.YearsCoding)
-  select t2.id, t3.name, t1.hobby, t1.dev_type, t1.years_coding
-  from ( 
-    select id, hobby, dev_type, years_coding 
-    from programmer 
-    where (hobby = 'yes' and student like 'yes%') or (years_coding = '0-2 yeares')
-  ) t1
-  left join covid t2
-  on t2.programmer_id = t1.id
-  left join hospital t3
-  on t3.id = t2.hospital_id
-  order by t1.id
+    ALTER TABLE covid ADD INDEX covid_programmer_id_index (programmer_id);
+    
+    select t2.id, t3.name, t1.hobby, t1.dev_type, t1.years_coding
+    from (
+        select id, hobby, dev_type, years_coding
+        from programmer
+        where hobby = 'YES' and (student like 'YES%' or years_coding = '0-2 years')
+    ) t1
+    left join covid t2
+    on t2.programmer_id = t1.id
+    left join hospital t3
+    on t3.id = t2.hospital_id
 
 - 1.4) 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계하세요. (covid.Stay)
   ALTER TABLE covid ADD INDEX covid_fk_index1 (programmer_id);
