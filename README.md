@@ -85,6 +85,12 @@ order by null
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
 
+- 공통 PK DDL
+ALTER TABLE covid ADD PRIMARY KEY (id);
+ALTER TABLE hospital ADD PRIMARY KEY (id);
+ALTER TABLE member ADD PRIMARY KEY (id);
+ALTER TABLE programmer ADD PRIMARY KEY (id);
+
 - 1.1) Coding as a Hobby 와 같은 결과를 반환하세요.
   ALTER TABLE programmer ADD INDEX hobby_index (hobby);
 
