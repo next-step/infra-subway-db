@@ -86,6 +86,25 @@ order by income desc;
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
 
+- Coding as a Hobby와 같은 결과값 반환
+
+```sql
+alter table programmer
+change column id bigint(20) not null,
+add primary key (id);
+
+create index 'idx_programmer_hobby'
+on programmer(hobby)
+
+select
+   hobby,
+   round(count(*) / (select count(id) from programmer) * 100, 1) as percent
+from
+    programmer
+group by
+    hobby;
+```
+
 ---
 
 ### 추가 미션
