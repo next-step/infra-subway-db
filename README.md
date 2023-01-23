@@ -86,6 +86,110 @@ order by income desc;
 
 1. 인덱스 적용해보기 실습을 진행해본 과정을 공유해주세요
 
+- Coding as a Hobby와 같은 결과값 반환
+
+```sql
+alter table programmer
+change column id bigint(20) not null,
+add primary key (id);
+
+create index 'idx_programmer_hobby'
+on programmer(hobby)
+
+select
+   hobby,
+   round(count(*) / (select count(id) from programmer) * 100, 1) as percent
+from
+    programmer
+group by
+    hobby;
+```
+
+- 프로그래머 별로 해당하는 병원 이름을 반환(covid.id, hospital.name)
+
+```sql
+alter table hospital
+change column id int(11) not null,
+add primary key (id);
+
+alter table covid
+change column hospital_id int(11),
+add primary key (id),
+add foreign key (hospital_id) references hospital(id),
+add foreign key (programmer_id) references programmer(id);
+
+select
+    c.id,
+    h.name
+from covid c 
+inner join hospital h on c.hospital_id = h.id
+inner join programmer p on c.programmer_id = p.id;
+```
+
+- 프로그래밍이 취미인 학생 혹은 주니어(0-2년)들이 다닌 병원 이름을 반환하고, user.id 기준으로 정렬(covid.id, hospital.name, user.hobby, user.devType, user.yearsCoding)
+
+```sql
+select
+    c.id,
+    h.name,
+    p.hobby,
+    p.dev_type,
+    p.years_coding
+from covid c
+    inner join hospital h on c.hospital_id = h.id
+    inner join programmer p on c.programmer_id = p.id
+where
+    (p.hobby = 'yes' and p.student != 'no' and p.student != 'na') or
+    p.years_coding = '0-2 years';
+```
+
+- 서울대병원에 다닌 20대 India 환자들을 병원에 머문 기간별로 집계(covid.stay)
+
+```sql
+alter table member
+change column id bigint(20) not null,
+add primary key(id),
+
+create index 'idx_programmer_country'
+on programmer(country)
+
+create index 'idx_member_age'
+on member(age)
+
+create index 'idx_covid_stay'
+on covic(stay)
+
+select
+    count(c.stay) as cnt,
+    c.stay
+from programmer p
+    inner join covid c on p.id = c.programmer_id
+    inner join member m on p.id = m.id
+where
+    p.country = 'india' and
+    m.age between 20 and 29
+group by c.stay;
+```
+
+- 서울대병원에 다닌 30대 환자들을 운동 횟수별로 집계(user.exercise)
+
+```sql
+create index 'idx_programmer_exercise'
+on programmer(exercise)
+
+select
+    count(p.exercise) as cnt,
+    p.exercise
+from programmer p
+    inner join covid c on p.id = c.programmer_id
+    inner join hospital h on c.hospital_id = h.id
+    inner join member m on m.id = p.id
+where
+    h.id = 9 and
+    m.age between 30 and 39
+group by p.exercise;
+```
+
 ---
 
 ### 추가 미션
